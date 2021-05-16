@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+    <!--
+        开启注解，代理使用配置文件
+        扫描指定包及其子包下的注解
+    -->
+    <context:component-scan base-package="com.jinhua"/>
+
+    <!--读取四大参数配置文件-->
+    <context:property-placeholder location="classpath:mysql.properties"/>
+    <!--配置C3P0连接池-->
+    <bean name="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="${jdbc.driver}"/>
+        <property name="jdbcUrl" value="${jdbc.url}"/>
+        <property name="user" value="${jdbc.user}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="maxPoolSize" value="10"/>
+    </bean>
+    <!--整合MyBatis数据-->
+    <bean name="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <!--核心配置文件-->
+        <property name="configLocation" value="classpath:SqlMapConfig.xml"/>
+    </bean>
+
+    <!--Mapper动态代理开发增强扫描,甚至可以自动扫描工厂-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!--可以扫描基本表及其子包-->
+        <property name="basePackage" value="com.jinhua.mapper"/>
+    </bean>
+
+    <!--配置Spring AOP核心事务管理器-->
+    <bean name="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <bean name="errorsMap" class="java.util.HashMap"/>
+    <bean name="arrayList" class="java.util.ArrayList"/>
+
+    <!--&lt;!&ndash;配置开启注解管理事务&ndash;&gt;-->
+    <!--<tx:annotation-driven transaction-manager="transactionManager"/>-->
+
+    <!--配置通知-->
+    <tx:advice transaction-manager="transactionManager" id="txAdvice">
+        <tx:attributes>
+            <tx:method name="login" isolation="DEFAULT" propagation="REQUIRED" read-only="true"/>
+            <tx:method name="register" isolation="DEFAULT" propagation="REQUIRED" read-only="false"/>
+            <tx:method name="query" isolation="DEFAULT" propagation="REQUIRED" read-only="true"/>
+            <tx:method name="getUserAll" isolation="DEFAULT" propagation="REQUIRED" read-only="true"/>
+            <!--企业中配置，通配符-->
+            <tx:method name="save*" isolation="DEFAULT" propagation="REQUIRED" read-only="false"/>
+            <tx:method name="persist*" isolation="DEFAULT" propagation="REQUIRED" read-only="false"/>
+            <tx:method name="delete*" isolation="DEFAULT" propagation="REQUIRED" read-only="false"/>
+            <tx:method name="remove*" isolation="DEFAULT" propagation="REQUIRED" read-only="false"/>
+            <tx:method name="update*" isolation="DEFAULT" propagation="REQUIRED" read-only="false"/>
+            <tx:method name="modify*" isolation="DEFAULT" propagation="REQUIRED" read-only="false"/>
+            <tx:method name="get*" isolation="DEFAULT" propagation="REQUIRED" read-only="true"/>
+            <tx:method name="find*" isolation="DEFAULT" propagation="REQUIRED" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+    <!--配置将通知织入目标对象-->
+    <aop:config>
+        <!--配置切点-->
+        <aop:pointcut id="txPc" expression="execution(public * com.jinhua.service.impl.*Impl.*(..))"/>
+        <!--配置切面
+            通知 + 切点
+        -->
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="txPc"/>
+    </aop:config>
+</beans>

@@ -1,0 +1,67 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jinhua.mapper.UserMapper">
+    <!--获取所有用户集合-->
+    <select id="getUserAll" resultType="User">
+        SELECT *
+        FROM usr
+    </select>
+
+    <!--新增用户-->
+    <insert id="addUser" parameterType="User">
+        INSERT
+        INTO usr(Name, Pwd, Sex, Home, Info)
+        VALUES (#{name}, #{pwd}, #{sex}, #{home}, #{info})
+    </insert>
+
+    <!--删除用户-->
+    <delete id="deleteUserById" parameterType="User">
+        DELETE
+        FROM usr
+        WHERE ID = #{id}
+    </delete>
+
+    <!--更新用户-->
+    <update id="updateUser" parameterType="User">
+        UPDATE usr
+        SET Name=#{name}, Pwd=#{pwd}, Sex=#{sex}, Home=#{home}, Info=#{info}
+        WHERE ID=#{id}
+    </update>
+
+    <!--通过唯一Name值找到用户-->
+    <select id="getUserByLoginName" parameterType="User" resultType="User">
+        SELECT *
+        FROM usr
+        WHERE Name=#{name}
+    </select>
+
+    <sql id="criteria">
+        FROM usr
+        <where>
+            <if test="arg2.name != null">
+                Name LIKE "%"#{arg2.name}"%"
+            </if>
+            <if test="arg2.sex != null">
+                AND Sex LIKE "%"#{arg2.sex}"%"
+            </if>
+            <if test="arg2.home != null">
+                AND Home LIKE "%"#{arg2.home}"%"
+            </if>
+            <if test="arg2.info != null">
+                AND Info LIKE "%"#{arg2.info}"%"
+            </if>
+        </where>
+    </sql>
+
+    <select id="getUserByPage" resultType="User">
+        SELECT *
+        <include refid="criteria"/>
+        LIMIT #{arg0}, #{arg1}
+    </select>
+
+    <select id="getTotalCount" resultType="Integer">
+        SELECT count(*)
+        <include refid="criteria"/>
+    </select>
+</mapper>
